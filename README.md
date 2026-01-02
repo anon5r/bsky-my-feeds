@@ -1,66 +1,65 @@
-# Bluesky Feed Monitor Base
+# Bluesky Feed Generator (Bun Edition)
 
-BlueskyのJetstream（Firehose）に接続し、複数の抽出ルールに基づいて投稿をリアルタイムで監視・フィルタリングするための汎用基盤です。
-Bunランタイムを使用しており、高速かつ低遅延で動作します。
+BlueskyのJetstreamから特定の投稿を収集し、カスタムフィードとして配信するFeed Generatorです。
+Bunランタイムを使用し、単一のプロセスで「収集（Monitor）」と「配信（XRPC Server）」の両方を効率的に行います。
 
-デフォルトで `template.ts` が含まれています。
-これをテンプレートとして独自のフィードルールを簡単に追加・運用できるように設計されています。
+## 機能
 
-## 特徴
+1.  **Monitor**: Jetstream (WebSocket) に接続し、正規表現で投稿をフィルタリングしてSQLiteに保存。
+2.  **Generator**: `app.bsky.feed.getFeedSkeleton` リクエストに対し、保存された投稿をJSONで返却。
 
-- **マルチフィード対応**: 1つの接続で複数の異なる抽出ルールを同時に稼働可能。
-- **モジュール構造**: `src/feeds/` にファイルを追加するだけで新しい監視対象を追加可能。
-- **高速動作**: Bun + WebSocketによる軽量実装。
-- **コンテナ対応**: Dockerでの運用を標準サポート。
+## 含まれるフィード
 
-## 新しいフィードの作り方
+- **anon-monitor**: `anon`, `あのん` などを収集（`canon`, `anond` 等を除外）。
+- **(拡張可能)**: `src/feeds/` に新しい定義を追加するだけで独自のフィードを作成可能。
 
-1. **テンプレートをコピー**:
-   `src/feeds/template.ts` をコピーして、任意の名前（例: `src/feeds/crypto.ts`）で保存します。
+## 必要要件
 
-2. **ロジックの実装**:
-   `filter` 関数内に抽出条件（正規表現やキーワード判定）を記述します。
-
-   ```typescript
-   export const cryptoFeed: Feed = {
-     name: "crypto-watch",
-     description: "Watches for crypto currencies",
-     filter: (text) => /bitcoin|eth/i.test(text)
-   };
-   ```
-
-3. **登録**:
-   `index.ts` を開き、作成したフィードをインポートして `activeFeeds` 配列に追加します。
-
-   ```typescript
-   import { cryptoFeed } from "./src/feeds/crypto";
-
-   const activeFeeds = [
-     anonFeed,
-     cryptoFeed, // 追加
-   ];
-   ```
+- Bun (v1.0.0+)
+- インターネット接続 (Jetstream用)
+- 公開サーバー (Feed Generatorとして公開する場合)
 
 ## 実行方法
+
+### 環境変数
+
+以下の環境変数を設定できます（`.env`ファイル対応は未実装ですが、コマンドラインで指定可能）。
+
+- `PORT`: サーバーポート（デフォルト: 3000）
+- `SERVICE_DID`: このサービスのDID（例: `did:web:example.com`）。Feed Generatorとして公開する際に必須。
 
 ### ローカル実行
 
 ```bash
+# 依存関係インストール
 bun install
-bun run index.ts
+
+# 実行
+SERVICE_DID="did:web:example.com" bun run index.ts
 ```
+
+起動すると、`feeds.sqlite` というデータベースファイルが生成され、データの蓄積が始まります。
+同時に `http://localhost:3000` でXRPCサーバーが立ち上がります。
 
 ### Docker実行
 
 ```bash
-docker build -t bsky-feed-monitor .
-docker run -d --name bsky-feed bsky-feed-monitor
+docker build -t bsky-feed-generator .
+docker run -d \
+  -p 3000:3000 \
+  -e SERVICE_DID="did:web:your-domain.com" \
+  -v $(pwd)/data:/app/data \
+  --name feed-gen \
+  bsky-feed-generator
 ```
+※ DBを永続化する場合、コンテナ内の保存先パスに合わせてボリュームマウントを調整してください（現在はカレントディレクトリに `feeds.sqlite` を作成します）。
 
-## 将来の拡張（Feed Generator化）
+## フィードの公開手順
 
-現在、本ツールは「監視ログ」を出力するクライアントとして動作します。
-Bluesky上の「カスタムフィード」として公開する場合、`src/core/manager.ts` 内の `logMatch` 部分を拡張し、マッチした投稿のURIをデータベース（SQLite/PostgreSQL等）に保存する処理を追加してください。その後、保存されたデータを返すXRPCサーバーを実装することでFeed Generatorとして機能します。
+1.  このサーバーをインターネット公開可能な場所にデプロイします（HTTPS必須）。
+2.  `SERVICE_DID` を設定します。
+3.  Bluesky公式のスクリプト等を使用して、フィードレコード（`app.bsky.feed.generator`）を公開します。
+    - その際、`did` には `SERVICE_DID` を、`service` にはデプロイ先のURLを指定します。
 
 ## ライセンス
 

@@ -1,7 +1,8 @@
 import { Jetstream } from "@skyware/jetstream";
 // @ts-ignore
 import { CompatibleWebSocket } from "./ws_wrapper";
-import type {Feed} from "./types";
+import type { Feed } from "./types";
+import { db } from "../db";
 
 export class FeedManager {
   private feeds: Feed[] = [];
@@ -31,12 +32,15 @@ export class FeedManager {
 
         const text = record.text;
         const did = event.did;
+        // URI構築: at://<did>/<collection>/<rkey>
+        const uri = `at://${did}/${event.commit.collection}/${event.commit.rkey}`;
+        const cid = event.commit.cid;
 
         // 登録された全フィードの条件をチェック
         for (const feed of this.feeds) {
           try {
             if (feed.filter(text, record, did)) {
-              this.logMatch(feed, text, did);
+              this.handleMatch(feed, text, did, uri, cid, record);
             }
           } catch (e) {
             console.error(`Error processing feed ${feed.name}:`, e);
@@ -46,13 +50,21 @@ export class FeedManager {
     });
   }
 
-  private logMatch(feed: Feed, text: string, did: string) {
+  private handleMatch(feed: Feed, text: string, did: string, uri: string, cid: string, record: any) {
     const timestamp = new Date().toISOString();
     const matchDetails = feed.formatMatch ? feed.formatMatch(text) : "Match";
     
-    console.log(`[${timestamp}] [${feed.name}] Found: ${matchDetails}`);
+    // DBに保存
+    db.createPost(feed.name, {
+      uri,
+      cid,
+      replyParent: record.reply?.parent?.uri,
+      replyRoot: record.reply?.root?.uri
+    });
+
+    console.log(`[${timestamp}] [${feed.name}] Saved: ${matchDetails}`);
     console.log(`User: ${did}`);
-    console.log(`Text: ${text.replace(/\n/g, " ")}`); // 改行をスペースに置換して1行表示
+    console.log(`Text: ${text.replace(/\n/g, " ")}`);
     console.log("---");
   }
 

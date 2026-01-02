@@ -12,6 +12,9 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@atproto/lexicon": "^0.6.0",
+    "@atproto/syntax": "^0.4.2",
+    "@atproto/xrpc-server": "^0.10.5",
     "@skyware/jetstream": "^0.2.5",
     "ws": "^8.18.3"
   }
