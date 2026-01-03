@@ -1,6 +1,8 @@
 // フィード定義のインターフェース
 export interface Feed {
-  // フィードの識別名
+  // フィードの一意なID (DB保存やURLのrkeyとして使用)
+  id: string;
+  // フィードの表示名
   name: string;
   // フィードの説明
   description: string;

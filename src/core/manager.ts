@@ -55,14 +55,14 @@ export class FeedManager {
     const matchDetails = feed.formatMatch ? feed.formatMatch(text) : "Match";
     
     // DBに保存
-    db.createPost(feed.name, {
+    db.createPost(feed.id, {
       uri,
       cid,
       replyParent: record.reply?.parent?.uri,
       replyRoot: record.reply?.root?.uri
     });
 
-    console.log(`[${timestamp}] [${feed.name}] Saved: ${matchDetails}`);
+    console.log(`[${timestamp}] [${feed.id}] (${feed.name}) Saved: ${matchDetails}`);
     console.log(`User: ${did}`);
     console.log(`Text: ${text.replace(/\n/g, " ")}`);
     console.log("---");
@@ -70,7 +70,7 @@ export class FeedManager {
 
   public start() {
     console.log(`Starting Feed Manager with ${this.feeds.length} feeds...`);
-    this.feeds.forEach(f => console.log(` - ${f.name}: ${f.description}`));
+    this.feeds.forEach(f => console.log(` - ${f.id} (${f.name}): ${f.description}`));
     this.jetstream.start();
   }
 }

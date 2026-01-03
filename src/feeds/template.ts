@@ -6,8 +6,11 @@ import type { Feed } from "../core/types";
 const REGEX = /search_pattern/i; // ここに検索したい正規表現を記述
 
 export const templateFeed: Feed = {
+  // 一意の識別子（DB保存やURLのrkeyとして使用）
+  id: "template-feed-id",
+  
   // 一意の識別子（ログ出力などに使用）
-  name: "template-feed",
+  name: "template-feed-name",
   
   // フィードの説明
   description: "Template feed description",

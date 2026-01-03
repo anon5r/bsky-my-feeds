@@ -11,7 +11,8 @@ import type {Feed} from "../core/types";
  * 2. 日本語パート: (?<![あ-ん])あの...
  *    - (?<![あ-ん]): 直前に濁音を含まないひらがながないこと（とりあのん、まあのんびり、きゃのん除外）
  */
-const REGEX = /(?<![a-zA-Z0-9])anon(?:5r(?:\.com)?|さん)?(?![a-zA-Z0-9])|(?<![あ-ん])あの(?:ん(?:さん|ちゃん)?|くん|ちゃん)/gu;
+//const REGEX = /(?<![a-zA-Z0-9])anon(?:5r(?:\.com)?|さん)?(?![a-zA-Z0-9])|(?<![あ-ん])あの(?:ん(?:さん|ちゃん)?|くん|ちゃん)/gu;
+const REGEX = /\banon5r(?:\.com)?|\w(?<![a-zA-Z0-9])anon(?:(?:[くさ]|ちゃ)ん|氏)?|(?<![あ-ん])あの(?:ん(?:(?:[くさ]|ちゃ)ん|氏)?|ん?(?:(?:[くさ]|ちゃ)ん|氏))|did:plc:c22jdrqhoajyj5ca7e56a3ke/gu;
 
 // 正規表現以外で除外したい特定のフレーズがあればここに追加
 const IGNORE_PHRASES = [
@@ -19,6 +20,7 @@ const IGNORE_PHRASES = [
 ];
 
 export const anonFeed: Feed = {
+  id: "anon",
   name: 'call my name',
   description: '名前言及補足用',
   

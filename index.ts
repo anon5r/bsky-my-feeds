@@ -33,11 +33,11 @@ Bun.serve({
        
        if (!feedUri) return new Response("Missing feed param", { status: 400 });
        
-       const feedName = feedUri.split("/").pop();
-       if (!feedName) return new Response("Invalid feed param", { status: 400 });
+       const feedId = feedUri.split("/").pop();
+       if (!feedId) return new Response("Invalid feed param", { status: 400 });
 
        // DBからデータを取得
-       const posts = db.getFeedSkeleton(feedName, limit, cursor);
+       const posts = db.getFeedSkeleton(feedId, limit, cursor);
        
        const feedItems = posts.map(p => ({ post: p.uri }));
        const nextCursor = posts.length > 0 ? posts[posts.length - 1].indexedAt : undefined;
@@ -51,7 +51,7 @@ Bun.serve({
     // 提供しているフィードの情報を返すエンドポイント
     if (url.pathname === "/xrpc/app.bsky.feed.describeFeedGenerator") {
       const feeds = activeFeeds.map(f => ({
-        uri: `at://${SERVICE_DID}/app.bsky.feed.generator/${f.name}`
+        uri: `at://${SERVICE_DID}/app.bsky.feed.generator/${f.id}`
       }));
       
       return Response.json({
