@@ -16,6 +16,6 @@
     "@atproto/syntax": "^0.4.2",
     "@atproto/xrpc-server": "^0.10.5",
     "@skyware/jetstream": "^0.2.5",
-    "ws": "^8.18.3"
+    "ws": "^8.21.0"
   }
 }
